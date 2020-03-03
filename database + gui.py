@@ -242,9 +242,12 @@ def Reviewabsences(permissions,name,UserID):         #shows staff all absences
                 if Statelist[i] == "Unapproved":
                     approve = tkinter.Button(absences2,text='Approve', command = lambda i=i:[ApproveAbsence(AbsenceID[i],permissions,name,UserID),absences2.destroy()])
                     approve.pack()
-                #a = int(CurrentAbsence[2].strftime("%Y%m%d"))+1
-                #date = datetime.datetime.strptime(str(a),'%Y%m%d')
-                #print(date)
+                a = int(CurrentAbsence[2].strftime("%Y%m%d"))
+                b = int(CurrentAbsence[3].strftime("%Y%m%d"))
+                for date in range(a,b):
+                    date = datetime.datetime.strptime(str(date),'%Y%m%d').weekday()
+                    if date == 1 or date ==3:
+                        print(date)
                 i+=1
         backtomenu=tkinter.Button(absences2,text='Back to Absences',command=lambda:[absences2.destroy(),Absences(permissions,name,UserID)])
         backtomenu.pack(side = tkinter.BOTTOM)
