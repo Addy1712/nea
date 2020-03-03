@@ -1,6 +1,7 @@
 import tkinter
 import datetime
 import mysql.connector
+from statistics import mode
 
 def executequery(query,data,W): #procedure that creates a connection to the database and queries the data
     databaseconnection = mysql.connector.connect(user='PythonAPI', password='Password2',
@@ -105,10 +106,53 @@ def Events(permissions,name,UserID): #creates event page and displayes query res
                 apply.append(tkinter.Button(events,text=(eventname[i]),command=lambda i=i:Apply_to_event(eventid[i],permissions,name,UserID)))
                 apply[i].pack()
         back = tkinter.Button(events,text="Back to Menu",command=lambda:[events.destroy(),Menu(permissions,name,UserID)])
-        back.pack()
+        back.pack(side = tkinter.BOTTOM)
         if permissions == 1:
                 newevent = tkinter.Button(events,text="Add Event",command=lambda:[events.destroy(),New_event_form(name,permissions,UserID)])
                 newevent.pack(side = tkinter.BOTTOM)
+                managebids = tkinter.Button(events,text="Manage bids",command=lambda:[events.destroy(),Manage_Bids(name,permissions,UserID)])
+                managebids.pack(side=tkinter.BOTTOM)
+        bids = executequery("SELECT EventID FROM Bids",None,False)
+        mostbid = executequery('SELECT Event.EventName FROM Event,Bids WHERE Event.EventID=Bids.BidID AND Bids.BidID ='+str(mode(bids[0])),None,False)
+        mostbidtext=('most bidded for event is '+ mostbid[0][0])
+        MostBidL = tkinter.Label(events,text=mostbidtext).pack(side = tkinter.RIGHT)
+        
+def Manage_Bids(name,permissions,UserID):
+    bids = tkinter.Tk()
+    bids.configure(background ='light blue')
+    bids.title('Events')
+    bids.geometry("1080x700")
+    title_text = str("Welcome to events " + name)
+    result = executequery("SELECT Bids.*,Users.TrueName,Event.EventName,Event.StartDate FROM Bids,Users,Event WHERE Bids.UserID=Users.UserID AND Bids.EventID=Event.EventID ORDER BY Selected ASC",None,False)
+    BidID =[]
+    i=0
+    DateFrom =[]
+    EName =[]
+    CName =[]
+    Statelist =[]
+    bidtext=[]
+    for Bid in result:
+                BidID.append(Bid[0])
+                DateFrom.append(Bid[6].strftime("%d-%b-%Y"))
+                State= Bid[3]
+                EName.append(Bid[5])
+                CName.append(Bid[4])
+                if State == 1:
+                    Statelist.append("Approved")
+                else:
+                    Statelist.append("Unapproved")
+                bidtext.append("Bid: "+str(BidID[i])+" | From: " +DateFrom[i]+" | Event: " +EName[i]+" | Cadet: "+ CName[i]+ " | Approved: "+Statelist[i])
+                bid = tkinter.Label (bids, text=bidtext[i]).pack()
+                if Statelist[i] == "Unapproved":
+                    approve = tkinter.Button(bids,text='Approve', command = lambda i=i:[ApproveBid(BidID[i],permissions,name,UserID),bids.destroy()])
+                    approve.pack()
+                i+=1
+    backtomenu=tkinter.Button(bids,text='Back to Events',command=lambda:[bids.destroy(),Events(permissions,name,UserID)])
+    backtomenu.pack(side = tkinter.BOTTOM)
+
+def ApproveBid(BidID,permissions,name,UserID):
+    executequery("UPDATE Bids SET Selected =1 WHERE BidID ="+str(BidID),None,True)
+    Manage_Bids(name,permissions,UserID)
                 
 def Absences(permissions,name,UserID): # creates absence page and displayes query results
         absences = tkinter.Tk()
@@ -198,12 +242,15 @@ def Reviewabsences(permissions,name,UserID):         #shows staff all absences
                 if Statelist[i] == "Unapproved":
                     approve = tkinter.Button(absences2,text='Approve', command = lambda i=i:[ApproveAbsence(AbsenceID[i],permissions,name,UserID),absences2.destroy()])
                     approve.pack()
+                #a = int(CurrentAbsence[2].strftime("%Y%m%d"))+1
+                #date = datetime.datetime.strptime(str(a),'%Y%m%d')
+                #print(date)
                 i+=1
         backtomenu=tkinter.Button(absences2,text='Back to Absences',command=lambda:[absences2.destroy(),Absences(permissions,name,UserID)])
         backtomenu.pack(side = tkinter.BOTTOM)
 
 def ApproveAbsence(AbsenceID,permsisons,name,UserID): #updates the absences to have an approved state
-        executequery("UPDATE Absence SET State =%d   WHERE AbsenceID"+str(AbsenceID),(1),True)
+        executequery("UPDATE Absence SET State =%d   WHERE AbsenceID="+str(AbsenceID),(1),True)
         Reviewabsences(permissions,name,UserID)
         
 def Users(permissions,name,UserID): #shows the user their current details
@@ -323,6 +370,8 @@ def ChangeUserInfo(permissions,name,UserID): #creates a form for changing detail
     TrueName_entry.pack()
     update  = tkinter.Button(editinfo,text = 'Update', command = lambda:[updateuser(permissions,Username_entry.get(),Password_entry.get(),TrueName_entry.get(),userid), editinfo.destroy(),])
     update.pack()
+    backtomenu=tkinter.Button(absences,text='Back to Menu',command=lambda:[editinfo.destroy(),Menu(permissions,name,UserID)])
+    backtomenu.pack(side = tkinter.BOTTOM)
 
 def updateuser(permissions,Username,Password,TrueName,UserID): # updates the users account
     executequery("UPDATE Users SET Username = %s, Password = %s, TrueName = %s WHERE UserID =%d",(Username,Password,TrueName,UserID),True)
@@ -352,7 +401,7 @@ def Apply_to_event(eventid,permissions,name,UserId): # creates a bid record
     Events(permissions,username)
     
         
-def New_event_form(username,permissions,UserID): #creates a form to create a new event
+def New_event_form(name,permissions,UserID): #creates a form to create a new event
         new_event_form = tkinter.Tk()
         new_event_form.configure(background ='light blue')
         new_event_form.geometry("1080x700")
@@ -375,9 +424,9 @@ def New_event_form(username,permissions,UserID): #creates a form to create a new
         info_entry.pack()
         create_event = tkinter.Button(new_event_form,text="Create Event", command = lambda:[Add_event(date_from_entry.get(), end_date_entry.get(),bid_date_entry.get(),name_entry.get(),info_entry.get(),username,permissions,UserID),new_event_form.destroy()])
         create_event.pack()
-        new_event_form.mainloop()
-        cancel_event = tkinter.Button(new_event_form,text="Cancel", command = lambda:[new_event_form.destroy(),Events()])
+        cancel_event = tkinter.Button(new_event_form,text="Cancel", command = lambda:[new_event_form.destroy(),Events(permissions,name,UserID)])
         cancel_event.pack()
+        new_event_form.mainloop()
 
 def Add_event(date_from,date_to,bid_date,name,info,username,permissions,UserID): #adds event to the database
         events = executequery('SELECT EventID FROM Event ORDER BY EventID DESC',None,False)
@@ -387,3 +436,5 @@ def Add_event(date_from,date_to,bid_date,name,info,username,permissions,UserID):
         
 if __name__ == "__main__":
             Login()
+
+
