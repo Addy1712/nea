@@ -245,14 +245,19 @@ def Reviewabsences(permissions,name,UserID):         #shows staff all absences
                     approve.pack()
                 a = int(CurrentAbsence[2].strftime("%Y%m%d"))
                 b = int(CurrentAbsence[3].strftime("%Y%m%d"))
+                counter =0
                 for date in range(a,b):
                     date = datetime.datetime.strptime(str(date),'%Y%m%d').weekday()
-                    counter =0
                     if date == 0 or date ==3:
                         counter +=1
-        
-                    datearray.append(counter)
+                for entry in datearray:
+                    if entry[1] == AName[i]:
+                        entry[0] = entry[o]+counter
+                    else:
+                        datearray.append([counter,AName[i]])
                 i+=1
+        print(datearray)
+        print(max(datearray)[0])
         backtomenu=tkinter.Button(absences2,text='Back to Absences',command=lambda:[absences2.destroy(),Absences(permissions,name,UserID)])
         backtomenu.pack(side = tkinter.BOTTOM)
 
