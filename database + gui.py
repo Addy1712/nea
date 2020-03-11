@@ -253,7 +253,7 @@ def Reviewabsences(permissions,name,UserID):         #shows staff all absences
                 datearray.append([counter,AName[i]])
                 i+=1
         mostabsence = max(datearray)
-        mostabsencetext = str(mostabsence[1]) +" is the most planned absent with "+  str(mostabsence[0]) +" days"
+        mostabsencetext = str(mostabsence[1]) +" has the most planned absences with "+  str(mostabsence[0]) +" days"
         mostABcentlabel = tkinter.Label(absences2,text=mostabsencetext).pack(side=tkinter.LEFT)
         backtomenu=tkinter.Button(absences2,text='Back to Absences',command=lambda:[absences2.destroy(),Absences(permissions,name,UserID)])
         backtomenu.pack(side = tkinter.BOTTOM)
