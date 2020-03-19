@@ -198,7 +198,7 @@ def NewAbsenceForm(permissions,name,UserID): # creates a new absence for for the
         reason = tkinter.Label(new_absence_form,text="Extra information for the absence:").pack()
         reason_entry = tkinter.Entry(new_absence_form)
         reason_entry.pack()
-        create_absence = tkinter.Button(new_absence_form,text="Submit absence", command = lambda:[AddAbsence(date_from_entry.get(),end_date_entry.get(),reason_entry.get(),permissions,name,UserID),new_absence_form.destroy()])
+        create_absence = tkinter.Button(new_absence_form,text="Submit absence", command = lambda:[Addabsence(date_from_entry.get(),end_date_entry.get(),reason_entry.get(),permissions,name,UserID),new_absence_form.destroy()])
         create_absence.pack()
         cancel_absence = tkinter.Button(new_absence_form,text="Cancel", command = lambda:[new_absence_form.destroy(),Absences(permissions,name,UserID)])
         cancel_absence.pack()
@@ -206,9 +206,9 @@ def NewAbsenceForm(permissions,name,UserID): # creates a new absence for for the
 
 def AddAbsence(date_from,end_date,reason,permissions,name,UserID): # updates database with the new absence
         absence = executequery('SELECT AbsenceID FROM Absences ORDER BY EventID DESC',None,False)
-        absenceid = absence[0][0] + 1
+        absenceid = events[0][0] + 1
         executequery('INSERT INTO Absences (AbsenceID, UserID, DateFrom, DateTo, Reason, Approved) VALUES(%s, %s, %s, %s, %s, %s)',(absenceid,UserID,date_from,end_date,reason,'0'),True) 
-        Absences(permissions,name,UserID)    
+        Absences(permissions,username,UserID)    
 
 def Reviewabsences(permissions,name,UserID):         #shows staff all absences  
         absences2 = tkinter.Tk()
@@ -225,7 +225,6 @@ def Reviewabsences(permissions,name,UserID):         #shows staff all absences
         Statelist=[]
         absencetext=[]
         AName=[]
-        datearray=[]
         result = executequery("SELECT Absences.*,Users.TrueName FROM Absences,Users WHERE (Absences.UserID=Users.UserID)",None,False)
         for CurrentAbsence in result:
                 AbsenceID.append(CurrentAbsence[0])
@@ -245,20 +244,15 @@ def Reviewabsences(permissions,name,UserID):         #shows staff all absences
                     approve.pack()
                 a = int(CurrentAbsence[2].strftime("%Y%m%d"))
                 b = int(CurrentAbsence[3].strftime("%Y%m%d"))
-                counter =0
                 for date in range(a,b):
                     date = datetime.datetime.strptime(str(date),'%Y%m%d').weekday()
-                    if date == 0 or date ==3:
-                        counter +=1
-                datearray.append([counter,AName[i]])
+                    if date == 1 or date ==3:
+                        print(date)
                 i+=1
-        mostabsence = max(datearray)
-        mostabsencetext = str(mostabsence[1]) +" has the most planned absences with "+  str(mostabsence[0]) +" days"
-        mostABcentlabel = tkinter.Label(absences2,text=mostabsencetext).pack(side=tkinter.LEFT)
         backtomenu=tkinter.Button(absences2,text='Back to Absences',command=lambda:[absences2.destroy(),Absences(permissions,name,UserID)])
         backtomenu.pack(side = tkinter.BOTTOM)
 
-def ApproveAbsence(AbsenceID,permissions,name,UserID): #updates the absences to have an approved state
+def ApproveAbsence(AbsenceID,permsisons,name,UserID): #updates the absences to have an approved state
         executequery("UPDATE Absence SET State =%d   WHERE AbsenceID="+str(AbsenceID),(1),True)
         Reviewabsences(permissions,name,UserID)
         
@@ -345,7 +339,7 @@ def EditUser(ID,UserName,TrueName,staff,permissions,name,UserID):
     else:
         staff = 'Cadet'
     permissions_entry.insert(0,staff)
-    update  = tkinter.Button(edituser,text = 'Change', command = lambda:[changeuser(ID,permissions_entry.get(),Username_entry.get(),Password_entry.get(),Truename_entry.get(),permissions,name,UserID), edituser.destroy()])
+    update  = tkinter.Button(edituser,text = 'Change', command = lambda:[changeuser(ID,permissions_entry.get(),Username_entry.get(),Password_entry.get(),TrueName_entry.get(),permissions,name,UserID), edituser.destroy()])
     update.pack()
     cancel = tkinter.Button(edituser,text='Cancel',command = lambda: [edituser.destroy(),ViewUsers(permissions,name,UserID)])
     cancel.pack(side = tkinter.BOTTOM)
@@ -379,12 +373,12 @@ def ChangeUserInfo(permissions,name,UserID): #creates a form for changing detail
     TrueName_entry.pack()
     update  = tkinter.Button(editinfo,text = 'Update', command = lambda:[updateuser(permissions,Username_entry.get(),Password_entry.get(),TrueName_entry.get(),userid), editinfo.destroy(),])
     update.pack()
-    backtomenu=tkinter.Button(editinfo,text='Back to Menu',command=lambda:[editinfo.destroy(),Menu(permissions,name,UserID)])
+    backtomenu=tkinter.Button(absences,text='Back to Menu',command=lambda:[editinfo.destroy(),Menu(permissions,name,UserID)])
     backtomenu.pack(side = tkinter.BOTTOM)
 
 def updateuser(permissions,Username,Password,TrueName,UserID): # updates the users account
     executequery("UPDATE Users SET Username = %s, Password = %s, TrueName = %s WHERE UserID =%d",(Username,Password,TrueName,UserID),True)
-    Login()
+    login()
             
 def Menu(permissions,name,UserID): # creates main menu 
         menu=tkinter.Tk()
@@ -407,7 +401,7 @@ def Apply_to_event(eventid,permissions,name,UserId): # creates a bid record
     bids = executequery('SELECT BidID FROM Bids ORDER BY BidID DESC',None,False)
     eventid = bids[0][0] + 1
     executequery('INSERT INTO Bids (BidID, EventID, UserID, Selected) VALUES(%s, %s, %s, %s)',(eventid, eventid,UserId,'0'),True) 
-    Events(permissions,name,UserID)
+    Events(permissions,username)
     
         
 def New_event_form(name,permissions,UserID): #creates a form to create a new event
@@ -431,7 +425,7 @@ def New_event_form(name,permissions,UserID): #creates a form to create a new eve
         info = tkinter.Label(new_event_form,text="Extra information for the event:").pack()
         info_entry = tkinter.Entry(new_event_form)
         info_entry.pack()
-        create_event = tkinter.Button(new_event_form,text="Create Event", command = lambda:[Add_event(date_from_entry.get(), end_date_entry.get(),bid_date_entry.get(),name_entry.get(),info_entry.get(),name,permissions,UserID),new_event_form.destroy()])
+        create_event = tkinter.Button(new_event_form,text="Create Event", command = lambda:[Add_event(date_from_entry.get(), end_date_entry.get(),bid_date_entry.get(),name_entry.get(),info_entry.get(),username,permissions,UserID),new_event_form.destroy()])
         create_event.pack()
         cancel_event = tkinter.Button(new_event_form,text="Cancel", command = lambda:[new_event_form.destroy(),Events(permissions,name,UserID)])
         cancel_event.pack()
